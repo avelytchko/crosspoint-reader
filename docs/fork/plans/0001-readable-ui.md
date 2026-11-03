@@ -52,29 +52,26 @@ the existing bounded menu-label callback and shared text truncation. SD fallback
 uses the existing font owner and teardown at two additional sizes; runtime costs
 with non-Latin SD fonts require device checks.
 
-The font-ID generator also recalculates pre-existing stale IDs from unchanged
-font headers. Existing section caches using built-in reader fonts fail the
-font-ID comparison in `lib/Epub/Epub/Section.cpp` and are regenerated when the
-book is reopened, regardless of the selected UI theme. Book files and progress
-are not deleted. The baseline-cache reopen check passed for the bundled test
-EPUB in the X3 emulator; representative books still need physical-device checks.
+`src/fontIds.h` keeps upstream's existing IDs and adds only `UI_14_FONT_ID` and
+`UI_16_FONT_ID`. Running `build-font-ids.sh` would recompute every ID, because
+upstream's committed IDs do not match their current font files; that would
+rebuild every book's layout cache and conflict with each upstream change to the
+file. Existing book caches stay valid.
 
 ## Affected devices and acceptance
 
-Shared firmware UI: X3 (`default`), X4 Pro (`x4pro`), Boox Picco (`picco`).
-Build all three. The X3 emulator is the primary visual check; no emulation result
-is physical-device validation.
+The owner currently has only an X3, so build and test `default` only. The code
+is shared UI and also compiles for X4 Pro and Picco; check those boards before
+using this change on them. The X3 emulator is a quick visual check; no
+emulation result is physical-device validation.
 
 On X3: compare Home, main Settings, every settings section, long labels and
 values, theme picker, English and Ukrainian. Select the last item of a scrolling
 list and verify it remains fully visible. Check switching to/from Readable and
 restart persistence. Exercise a fifth Home item when Plugins/OPDS is enabled.
-
-On X4 Pro and Picco: verify rounded/bezel-safe bounds, touch targets, theme
-selection including Cover Grid, and return to existing themes. On each device,
-check all applicable orientations, button/remap navigation, opening/closing a
-book, and repeated Settings entry without heap loss. Check CJK SD fallback at
-14/16 pt when installed. Device acceptance and hardware measurements are pending.
+Check all four orientations, button/remap navigation, opening and closing a
+book (it must open without a layout rebuild), and repeated Settings entry
+without heap loss. Device acceptance and hardware measurements are pending.
 
 ## Files
 
@@ -86,6 +83,9 @@ book, and repeated Settings entry without heap loss. Check CJK SD fallback at
 - English/Ukrainian theme label and this fork registry/plan.
 
 ## Status
+
+Follow-up: upstream font IDs restored and the plan limited to X3. The X3
+build passed again (static RAM 66,728 B, flash 5,930,585 B, no warnings).
 
 Implementation, four independent reviews, targeted follow-up, formatting, shared
 UI host checks and all three final builds are complete. X3 emulator checks cover
@@ -128,7 +128,8 @@ renderer to Portrait. No firmware path was added to rotate Home.
 - Final X3 emulator reopened `font-prewarm-benchmark.epub` after creating its
   section cache with the baseline binary. It logged the expected parameter
   mismatch, rebuilt the cache, and preserved `spine=0 offset=24 page=1` (second
-  page). The test log and screenshot are in `build/readable-ui/`.
+  page). The test log and screenshot are in `build/readable-ui/`. This check
+  predates restoring upstream's font IDs; with them, the cache is kept.
 - Final Home shows all four icons with matching label alignment. Ukrainian
   Display wraps long labels and fits all ten rows. Other device input/touch,
   orientations and SD/vector fallback heap checks remain human hardware checks.

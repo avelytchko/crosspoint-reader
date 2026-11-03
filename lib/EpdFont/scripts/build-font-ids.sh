@@ -65,7 +65,6 @@ for size in 14 16; do
       './ubuntu_${size}_bold.h',
     ].map{|f| Digest::SHA256.hexdigest(File.read(f)).to_i(16) }.sum % (2 ** 32) - (2 ** 31)"
   ))"
-  echo ""
 done
 
 echo "#define SMALL_FONT_ID ($(
