@@ -74,6 +74,12 @@ void SettingsListActivity::buildScreen(UiScreen& screen) {
                                                   screen.target().lineHeight(theme.smallText.font));
   const int16_t paddingY = mappedInput.hasTouch() ? theme.listTouchRowPaddingY : theme.listRowPaddingY;
   props.rowHeight = static_cast<int16_t>(std::max<int16_t>(textHeight, ICON_SIZE) + 2 * paddingY);
+  if (SETTINGS.uiTheme == CrossPointSettings::READABLE) {
+    props.rowHeight =
+        static_cast<int16_t>(std::max<int>(screen.target().lineHeight(theme.bodyText.font), ICON_SIZE) + 2 * paddingY);
+    props.labelText = theme.bodyText;
+    props.labelText.maxLines = 2;
+  }
   syncListViewport(screen, props);
   screen.list(props);
 }

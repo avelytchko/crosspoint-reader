@@ -201,6 +201,7 @@ void SettingsActivity::applyUiSettingChange(uint8_t CrossPointSettings::* valueP
   if (valuePtr != &CrossPointSettings::uiTheme) {
     return;
   }
+  RenderLock lock(*this);
   UITheme::getInstance().reload();
   // Re-derive the shared tokens for the new look; the gate stays closed until
   // the repaint that rebuilds the interaction table in the new layout.
@@ -255,11 +256,13 @@ void SettingsActivity::toggleSelectedSetting() {
     const uint8_t cur = setting.valueGetter();
     if (totalValues > 2) {
       const auto valueSetter = setting.valueSetter;
-      auto onSelect = [this, valueSetter, sleepScreenChanged, quickResumeTimeoutChanged](int idx) {
+      const bool themeChanged = setting.nameId == StrId::STR_UI_THEME;
+      auto onSelect = [this, valueSetter, sleepScreenChanged, quickResumeTimeoutChanged, themeChanged](int idx) {
         valueSetter(idx);
         syncQuickResumeTimeoutForSleepScreen(sleepScreenChanged, quickResumeTimeoutChanged);
         SETTINGS.saveToFile();
         rebuildSettings();
+        if (themeChanged) applyUiSettingChange(&CrossPointSettings::uiTheme);
       };
       if (!setting.enumStringValues.empty()) {
         optionPopup.show(setting.nameId, setting.enumStringValues, cur, std::move(onSelect));

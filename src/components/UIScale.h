@@ -1,10 +1,11 @@
 #pragma once
+#include "CrossPointSettings.h"
 #include "fontIds.h"
 
 // FreeInkUI font slots. Row heights, header height, and touch sizes are not
 // chosen here: FreeInkApp derives all metric tokens from the body font's line
-// height (themeTokensForLineHeight). One fixed tier for every board — the
-// user-facing UI-scale setting was removed.
+// height (themeTokensForLineHeight). Readable selects larger faces without
+// multiplying the theme's padding.
 struct UIScaleSpec {
   int smallFontId;
   int bodyFontId;
@@ -12,6 +13,7 @@ struct UIScaleSpec {
 };
 
 inline UIScaleSpec uiScaleSpec() {
+  if (SETTINGS.uiTheme == CrossPointSettings::READABLE) return {UI_14_FONT_ID, UI_16_FONT_ID, UI_16_FONT_ID};
   UIScaleSpec spec{};
   spec.smallFontId = UI_10_FONT_ID;
   spec.bodyFontId = UI_12_FONT_ID;

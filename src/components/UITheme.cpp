@@ -16,6 +16,7 @@
 #include "components/themes/BaseTheme.h"
 #include "components/themes/lyra/Lyra3CoversTheme.h"
 #include "components/themes/lyra/LyraTheme.h"
+#include "components/themes/readable/ReadableTheme.h"
 #include "components/themes/roundedraff/RoundedRaffTheme.h"
 
 UITheme UITheme::instance;
@@ -67,6 +68,18 @@ void UITheme::setTheme(CrossPointSettings::UI_THEME type) {
       LOG_DBG("UI", "Using Lyra 3 Covers theme");
       currentTheme = std::make_unique<Lyra3CoversTheme>();
       currentMetrics = &Lyra3CoversMetrics::values;
+      break;
+    case CrossPointSettings::UI_THEME::READABLE: {
+      auto theme = makeUniqueNoThrow<ReadableTheme>();
+      if (!theme) {
+        LOG_ERR("UI", "OOM: Readable theme (%u bytes)", static_cast<unsigned>(sizeof(ReadableTheme)));
+        return;
+      }
+      currentTheme = std::move(theme);
+      currentMetrics = &ReadableMetrics::values;
+      break;
+    }
+    case CrossPointSettings::UI_THEME::UI_THEME_COUNT:
       break;
   }
   metricsValid = false;

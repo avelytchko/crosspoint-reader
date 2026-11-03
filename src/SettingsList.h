@@ -268,10 +268,10 @@ inline SettingInfo buildShortPowerButtonSetting() {
 }
 
 inline std::vector<StrId> homeThemeValues() {
-  static constexpr StrId VALUES[] = {StrId::STR_THEME_CLASSIC, StrId::STR_THEME_LYRA, StrId::STR_THEME_LYRA_EXTENDED,
-                                     StrId::STR_THEME_ROUNDEDRAFF, StrId::STR_THEME_COVER_GRID};
-  const size_t count = UITheme::supportsCoverGrid() ? std::size(VALUES) : std::size(VALUES) - 1;
-  return {VALUES, VALUES + count};
+  static constexpr StrId VALUES[] = {StrId::STR_THEME_CLASSIC,       StrId::STR_THEME_LYRA,
+                                     StrId::STR_THEME_LYRA_EXTENDED, StrId::STR_THEME_ROUNDEDRAFF,
+                                     StrId::STR_THEME_COVER_GRID,    StrId::STR_THEME_READABLE};
+  return {std::begin(VALUES), std::end(VALUES)};
 }
 
 using SettingVisitor = void (*)(void* context, SettingInfo& info);
@@ -293,6 +293,25 @@ std::vector<SettingInfo> getBaseSettingsList(size_t extraCapacity = 0);
 inline std::vector<SettingInfo> getSettingsList(const SdCardFontRegistry* registry = nullptr,
                                                 const std::vector<DictionaryEntry>* dictionaries = nullptr) {
   auto v = getBaseSettingsList(dictionaries && !dictionaries->empty() ? 1 : 0);
+  if (!UITheme::supportsCoverGrid()) {
+    // Keep persisted theme IDs stable while hiding the unsupported grid option.
+    auto it = std::find_if(v.begin(), v.end(), [](const SettingInfo& s) { return s.nameId == StrId::STR_UI_THEME; });
+    if (it != v.end()) {
+      auto labels = homeThemeValues();
+      labels.erase(labels.begin() + CrossPointSettings::COVER_GRID);
+      *it = SettingInfo::DynamicEnum(
+          StrId::STR_UI_THEME, std::move(labels),
+          []() -> uint8_t {
+            if (SETTINGS.uiTheme == CrossPointSettings::READABLE) return CrossPointSettings::READABLE - 1;
+            if (SETTINGS.uiTheme == CrossPointSettings::COVER_GRID) return CrossPointSettings::LYRA;
+            return SETTINGS.uiTheme;
+          },
+          [](uint8_t value) {
+            SETTINGS.uiTheme = value == CrossPointSettings::READABLE - 1 ? CrossPointSettings::READABLE : value;
+          },
+          "uiTheme", StrId::STR_CAT_DISPLAY);
+    }
+  }
   // Frontlit and lightless variants of a board share one binary (EEGO A4);
   // presence is the I2C probe result from Frontlight.begin(). UI-only: the probe
   // has not run at load time, so the base list must keep the persisted key.
